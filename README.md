@@ -19,15 +19,16 @@ This project investigates how climate change influences property insurance claim
 - **Variable Selection:** Forward, backward, and stepwise AIC/BIC-based selection.
 
 ## Key Findings
-- Overdispersion and excess zeros were observed, indicating standard Poisson models were unsuitable.
-- The **Negative Binomial model** offered the best balance of fit and simplicity.
-- Elevation and sub-item type were significant predictors of claim frequency.
+- Overdispersion and excess zeros were present, making standard Poisson models unsuitable  
+- Negative Binomial model provided the best balance of fit, simplicity, and interpretability  
+- Elevation and sub-item type were consistently significant predictors of claim frequency  
+- Zero-inflated models offered additional insights but did not outperform the NB model overall
 
 ## Results 
 - Model comparison metrics: AIC and BIC tables included in `results/model_summary.txt`.
 
-## Practical Implications
-These findings can assist insurers in better understanding and pricing climate-related risks in property portfolios.
+## Future Work
+Future studies could explore hurdle models or spatial/spatio-temporal approaches (e.g., INLA) to further improve model accuracy and applicability.
 
 ## Author
 **Kesia Eldo**  
