@@ -1,0 +1,1036 @@
+> # Load necessary libraries
+> library(MASS)
+> 
+> # Load full dataset
+> data <- read.csv("Data_final.csv")
+> attach(data)
+The following objects are masked _by_ .GlobalEnv:
+
+    Construction_Material_C, floodvulnerability, FloorsType_C, Item_Type_C,
+    postcode_coast_flg, SubItemType_C, windvulnerability
+
+The following objects are masked from data (pos = 4):
+
+    builtYear, ClaimNb_Flood, ClaimNb_Other, ClaimNb_Storm,
+    Construction_Material_C, floodvulnerability, Floors_No, FloorsType_C,
+    Item_Type_C, nrOfFloors, PolicyNo_Flag, postalCode, postcode_alt_mean,
+    postcode_area, postcode_coast_flg, postcode_coast_len, postcode_perimeter,
+    postcode_rgh_mean, postcode_slo_mean, postcode_slp_mean, SubItemType_C,
+    TCapital_Insurred, TClaimsNo, TExposure, windvulnerability, X
+
+The following objects are masked from data (pos = 5):
+
+    builtYear, ClaimNb_Flood, ClaimNb_Other, ClaimNb_Storm,
+    Construction_Material_C, floodvulnerability, Floors_No, FloorsType_C,
+    Item_Type_C, nrOfFloors, PolicyNo_Flag, postalCode, postcode_alt_mean,
+    postcode_area, postcode_coast_flg, postcode_coast_len, postcode_perimeter,
+    postcode_rgh_mean, postcode_slo_mean, postcode_slp_mean, SubItemType_C,
+    TCapital_Insurred, TClaimsNo, TExposure, windvulnerability, X
+
+The following objects are masked from data (pos = 12):
+
+    builtYear, ClaimNb_Flood, ClaimNb_Other, ClaimNb_Storm,
+    Construction_Material_C, floodvulnerability, Floors_No, FloorsType_C,
+    Item_Type_C, nrOfFloors, PolicyNo_Flag, postalCode, postcode_alt_mean,
+    postcode_area, postcode_coast_flg, postcode_coast_len, postcode_perimeter,
+    postcode_rgh_mean, postcode_slo_mean, postcode_slp_mean, SubItemType_C,
+    TCapital_Insurred, TClaimsNo, TExposure, windvulnerability, X
+
+> data <- data.frame(SubItemType_C, builtYear, nrOfFloors, Construction_Material_C, Item_Type_C, 
++                    FloorsType_C, Floors_No, floodvulnerability, windvulnerability, 
++                    postcode_area, postcode_perimeter, postcode_coast_len, 
++                    postcode_coast_flg, postcode_alt_mean, postcode_slo_mean, postcode_rgh_mean,
++                    TExposure, TClaimsNo)
+> 
+> # Set the seed and take a sample of 30,000 observations
+> set.seed(7561)
+> sample_size <- 30000
+> sample_data <- data[sample(1:nrow(data), sample_size), ]
+> sample_data <- data.frame(sample_data)
+> names(sample_data)
+ [1] "SubItemType_C"           "builtYear"               "nrOfFloors"             
+ [4] "Construction_Material_C" "Item_Type_C"             "FloorsType_C"           
+ [7] "Floors_No"               "floodvulnerability"      "windvulnerability"      
+[10] "postcode_area"           "postcode_perimeter"      "postcode_coast_len"     
+[13] "postcode_coast_flg"      "postcode_alt_mean"       "postcode_slo_mean"      
+[16] "postcode_rgh_mean"       "TExposure"               "TClaimsNo"              
+> 
+> # Convert categorical variables to factors
+> SubItemType_C <- factor(SubItemType_C)
+> Construction_Material_C <- factor(Construction_Material_C)
+> Item_Type_C <- factor(Item_Type_C)
+> FloorsType_C <- factor(FloorsType_C)
+> postcode_coast_flg <- factor(postcode_coast_flg)
+> 
+> # Set reference levels for categorical variables
+> floodvulnerability <- factor(floodvulnerability, levels = c("1", "2", "3", "4", "5"))
+> floodvulnerability <- relevel(floodvulnerability, ref = "5")
+> windvulnerability <- factor(windvulnerability, levels = c("1", "2", "3"))
+> 
+> ## ------------------------ AIC-Based Variable Selection- Poisson ------------------------
+> 
+> # Fit the initial Poisson model using the full dataset
+> poisModel_glm <- glm(TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors + Construction_Material_C + 
++                        Item_Type_C + FloorsType_C + Floors_No + floodvulnerability + windvulnerability +
++                        postcode_area + postcode_perimeter + postcode_coast_len + postcode_coast_flg + 
++                        postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean + offset(log(TExposure)), 
++                      family = poisson, data = sample_data)
+> 
+> summary(poisModel_glm)
+
+Call:
+glm(formula = TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors + 
+    Construction_Material_C + Item_Type_C + FloorsType_C + Floors_No + 
+    floodvulnerability + windvulnerability + postcode_area + 
+    postcode_perimeter + postcode_coast_len + postcode_coast_flg + 
+    postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean + 
+    offset(log(TExposure)), family = poisson, data = sample_data)
+
+Coefficients:
+                            Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               -1.666e+01  7.046e+00  -2.365   0.0180 *  
+SubItemType_CC2           -2.152e+00  1.593e-01 -13.509   <2e-16 ***
+builtYear                  5.821e-03  3.568e-03   1.631   0.1028    
+nrOfFloors                -3.013e-02  2.842e-02  -1.060   0.2892    
+Construction_Material_CC2  1.041e-01  2.524e-01   0.412   0.6801    
+Item_Type_CC2              2.898e-01  5.190e-01   0.558   0.5765    
+Item_Type_CC3             -1.455e-01  1.445e-01  -1.007   0.3139    
+Item_Type_CC4             -7.214e+00  2.847e+02  -0.025   0.9798    
+FloorsType_CC2             5.490e-02  1.333e-01   0.412   0.6805    
+Floors_No                  2.070e-01  9.331e-02   2.218   0.0265 *  
+floodvulnerability2       -6.148e-01  5.255e-01  -1.170   0.2421    
+floodvulnerability3        2.173e-01  2.674e-01   0.813   0.4164    
+floodvulnerability4       -1.148e-01  1.561e-01  -0.735   0.4622    
+windvulnerability2        -5.125e-02  2.524e-01  -0.203   0.8391    
+windvulnerability3         3.202e-01  3.756e-01   0.853   0.3939    
+postcode_area             -1.523e-08  1.031e-08  -1.476   0.1399    
+postcode_perimeter         2.888e-05  1.943e-05   1.486   0.1373    
+postcode_coast_len        -8.576e-06  2.601e-05  -0.330   0.7416    
+postcode_coast_flg1       -1.910e-01  2.649e-01  -0.721   0.4707    
+postcode_alt_mean          1.745e-03  9.356e-04   1.865   0.0622 .  
+postcode_rgh_mean         -1.565e-03  3.264e-02  -0.048   0.9618    
+postcode_slo_mean          4.051e-06  3.041e-01   0.000   1.0000    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3205.1  on 29978  degrees of freedom
+AIC: 4011.2
+
+Number of Fisher Scoring iterations: 10
+
+> 
+> 
+> # --------------------------
+> # Forward Selection (AIC)
+> # --------------------------
+> base_model <- glm(TClaimsNo ~ 1 + offset(log(TExposure)), data = sample_data, family = poisson)
+> current_vars <- c()
+> candidates <- setdiff(names(sample_data), c("TClaimsNo", "TExposure")) 
+> old_aic <- AIC(base_model)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_aic <- old_aic
++   best_var <- NULL
++   
++   for (v in candidates) {
++     test_vars <- c(current_vars, v)
++     form <- as.formula(paste("TClaimsNo ~", paste(test_vars, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp <- glm(form, data = sample_data, family = poisson)
++     this_aic <- AIC(model_temp)
++     
++     if (this_aic < best_aic) {
++       best_aic <- this_aic
++       best_var <- v
++     }
++   }
++   
++   if (!is.null(best_var)) {
++     current_vars <- c(current_vars, best_var)
++     candidates <- setdiff(candidates, best_var)
++     old_aic <- best_aic
++     improvement <- TRUE
++   }
++ }
+> 
+> # Final Forward AIC Model
+> forward_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars, collapse = " + "), "+ offset(log(TExposure))"))
+> forward_AIC_model <- glm(forward_formula, data = sample_data, family = poisson)
+> summary(forward_AIC_model)
+
+Call:
+glm(formula = forward_formula, family = poisson, data = sample_data)
+
+Coefficients:
+                      Estimate Std. Error z value Pr(>|z|)    
+(Intercept)         -1.940e+01  6.810e+00  -2.848  0.00440 ** 
+SubItemType_CC2     -2.150e+00  1.593e-01 -13.497  < 2e-16 ***
+floodvulnerability2 -4.131e-01  4.299e-01  -0.961  0.33665    
+floodvulnerability3  3.168e-01  1.572e-01   2.015  0.04394 *  
+floodvulnerability4 -1.771e-02  1.313e-01  -0.135  0.89273    
+postcode_alt_mean    1.553e-03  5.732e-04   2.708  0.00676 ** 
+builtYear            7.260e-03  3.439e-03   2.111  0.03479 *  
+Floors_No            1.692e-01  8.654e-02   1.955  0.05061 .  
+nrOfFloors          -3.939e-02  2.764e-02  -1.425  0.15407    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3212.6  on 29991  degrees of freedom
+AIC: 3992.7
+
+Number of Fisher Scoring iterations: 8
+
+> 
+> 
+> #--------------------------
+> # Backward Selection (AIC)
+> #--------------------------
+> current_vars <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_aic <- AIC(poisModel_glm)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_aic <- old_aic
++   worst_var <- NULL
++   
++   for (v in current_vars) {
++     candidate_vars <- setdiff(current_vars, v)
++     form <- as.formula(paste("TClaimsNo ~", paste(candidate_vars, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp <- glm(form, data = sample_data, family = poisson)
++     this_aic <- AIC(model_temp)
++     
++     if (this_aic < best_aic) {
++       best_aic <- this_aic
++       worst_var <- v
++     }
++   }
++   
++   if (!is.null(worst_var)) {
++     current_vars <- setdiff(current_vars, worst_var)
++     old_aic <- best_aic
++     improvement <- TRUE
++   }
++ }
+> 
+> # Final Backward AIC Model
+> backward_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars, collapse = " + "), "+ offset(log(TExposure))"))
+> backward_AIC_model <- glm(backward_formula, data = sample_data, family = poisson)
+> summary(backward_AIC_model)
+
+Call:
+glm(formula = backward_formula, family = poisson, data = sample_data)
+
+Coefficients:
+                      Estimate Std. Error z value Pr(>|z|)    
+(Intercept)         -1.921e+01  6.836e+00  -2.810  0.00496 ** 
+SubItemType_CC2     -2.151e+00  1.593e-01 -13.500  < 2e-16 ***
+builtYear            7.084e-03  3.458e-03   2.049  0.04049 *  
+Floors_No            1.475e-01  8.494e-02   1.736  0.08252 .  
+floodvulnerability2 -6.725e-01  4.849e-01  -1.387  0.16551    
+floodvulnerability3  1.438e-01  2.179e-01   0.660  0.50937    
+floodvulnerability4 -9.598e-02  1.464e-01  -0.655  0.51218    
+postcode_area       -1.503e-08  9.791e-09  -1.535  0.12489    
+postcode_perimeter   2.351e-05  1.536e-05   1.530  0.12591    
+postcode_alt_mean    1.941e-03  6.302e-04   3.079  0.00208 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3212.1  on 29990  degrees of freedom
+AIC: 3994.2
+
+Number of Fisher Scoring iterations: 8
+
+> 
+> # Stepwise Selection using AIC (Both directions)
+> stepAIC_model <- stepAIC(poisModel_glm, direction = "both", trace = FALSE)
+> summary(stepAIC_model)
+
+Call:
+glm(formula = TClaimsNo ~ SubItemType_C + builtYear + Floors_No + 
+    floodvulnerability + postcode_area + postcode_perimeter + 
+    postcode_alt_mean + offset(log(TExposure)), family = poisson, 
+    data = sample_data)
+
+Coefficients:
+                      Estimate Std. Error z value Pr(>|z|)    
+(Intercept)         -1.921e+01  6.836e+00  -2.810  0.00496 ** 
+SubItemType_CC2     -2.151e+00  1.593e-01 -13.500  < 2e-16 ***
+builtYear            7.084e-03  3.458e-03   2.049  0.04049 *  
+Floors_No            1.475e-01  8.494e-02   1.736  0.08252 .  
+floodvulnerability2 -6.725e-01  4.849e-01  -1.387  0.16551    
+floodvulnerability3  1.438e-01  2.179e-01   0.660  0.50937    
+floodvulnerability4 -9.598e-02  1.464e-01  -0.655  0.51218    
+postcode_area       -1.503e-08  9.791e-09  -1.535  0.12489    
+postcode_perimeter   2.351e-05  1.536e-05   1.530  0.12591    
+postcode_alt_mean    1.941e-03  6.302e-04   3.079  0.00208 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3212.1  on 29990  degrees of freedom
+AIC: 3994.2
+
+Number of Fisher Scoring iterations: 8
+
+> 
+> ## ------------------------ BIC-Based Variable Selection- Poisson ------------------------
+> 
+> #--------------------------
+> # Forward Selection (BIC)
+> #--------------------------
+> k_bic <- log(nrow(sample_data))
+> base_model <- glm(TClaimsNo ~ 1 + offset(log(TExposure)), data = sample_data, family = poisson)
+> current_vars <- c()
+> candidates <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_bic <- AIC(base_model, k = k_bic)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_bic <- old_bic
++   best_var <- NULL
++   
++   for (v in candidates) {
++     test_vars <- c(current_vars, v)
++     form <- as.formula(paste("TClaimsNo ~", paste(test_vars, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp <- glm(form, data = sample_data, family = poisson)
++     this_bic <- AIC(model_temp, k = k_bic)
++     
++     if (this_bic < best_bic) {
++       best_bic <- this_bic
++       best_var <- v
++     }
++   }
++   
++   if (!is.null(best_var)) {
++     current_vars <- c(current_vars, best_var)
++     candidates <- setdiff(candidates, best_var)
++     old_bic <- best_bic
++     improvement <- TRUE
++   }
++ }
+> 
+> # Final Forward BIC Model
+> forward_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars, collapse = " + "), "+ offset(log(TExposure))"))
+> forward_BIC_model <- glm(forward_formula, data = sample_data, family = poisson)
+> summary(forward_BIC_model)
+
+Call:
+glm(formula = forward_formula, family = poisson, data = sample_data)
+
+Coefficients:
+                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)       -4.851458   0.084194 -57.622  < 2e-16 ***
+SubItemType_CC2   -2.147063   0.159311 -13.477  < 2e-16 ***
+postcode_alt_mean  0.002038   0.000397   5.135 2.82e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3234.7  on 29997  degrees of freedom
+AIC: 4002.9
+
+Number of Fisher Scoring iterations: 8
+
+> BIC(forward_BIC_model)
+[1] 4027.804
+> 
+> #--------------------------
+> # Backward Selection (BIC)
+> #--------------------------
+> current_vars <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_bic <- AIC(poisModel_glm, k = k_bic)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_bic <- old_bic
++   worst_var <- NULL
++   
++   for (v in current_vars) {
++     candidate_vars <- setdiff(current_vars, v)
++     form <- as.formula(paste("TClaimsNo ~", paste(candidate_vars, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp <- glm(form, data = sample_data, family = poisson)
++     this_bic <- AIC(model_temp, k = k_bic)
++     
++     if (this_bic < best_bic) {
++       best_bic <- this_bic
++       worst_var <- v
++     }
++   }
++   
++   if (!is.null(worst_var)) {
++     current_vars <- setdiff(current_vars, worst_var)
++     old_bic <- best_bic
++     improvement <- TRUE
++   }
++ }
+> 
+> # Final Backward BIC Model
+> backward_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars, collapse = " + "), "+ offset(log(TExposure))"))
+> backward_BIC_model <- glm(backward_formula, data = sample_data, family = poisson)
+> summary(backward_BIC_model)
+
+Call:
+glm(formula = backward_formula, family = poisson, data = sample_data)
+
+Coefficients:
+                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)       -4.851458   0.084194 -57.622  < 2e-16 ***
+SubItemType_CC2   -2.147063   0.159311 -13.477  < 2e-16 ***
+postcode_alt_mean  0.002038   0.000397   5.135 2.82e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3234.7  on 29997  degrees of freedom
+AIC: 4002.9
+
+Number of Fisher Scoring iterations: 8
+
+> BIC(backward_BIC_model)
+[1] 4027.804
+> 
+> # Stepwise Selection using BIC (Both directions)
+> stepBIC_model <- stepAIC(poisModel_glm, direction = "both", k = log(nrow(sample_data)), trace = FALSE)
+> summary(stepBIC_model)
+
+Call:
+glm(formula = TClaimsNo ~ SubItemType_C + postcode_alt_mean + 
+    offset(log(TExposure)), family = poisson, data = sample_data)
+
+Coefficients:
+                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)       -4.851458   0.084194 -57.622  < 2e-16 ***
+SubItemType_CC2   -2.147063   0.159311 -13.477  < 2e-16 ***
+postcode_alt_mean  0.002038   0.000397   5.135 2.82e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 3562.7  on 29999  degrees of freedom
+Residual deviance: 3234.7  on 29997  degrees of freedom
+AIC: 4002.9
+
+Number of Fisher Scoring iterations: 8
+
+> BIC(stepBIC_model)
+[1] 4027.804
+
+
+> ## ------------------------ AIC-Based Variable Selection-NB ------------------------
+> 
+> library(gamlss)
+> 
+> # Fit the initial NB GAMLSS model
+> nb_gamlss_model <- gamlss(TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors + Construction_Material_C + 
++                             Item_Type_C + FloorsType_C + Floors_No + floodvulnerability + windvulnerability +
++                             postcode_area + postcode_perimeter + postcode_coast_len + postcode_coast_flg + 
++                             postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean + offset(log(TExposure)), 
++                           family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3829.253 
+GAMLSS-RS iteration 2: Global Deviance = 3826.985 
+GAMLSS-RS iteration 3: Global Deviance = 3826.983 
+GAMLSS-RS iteration 4: Global Deviance = 3826.983 
+> 
+> # Summary of the initial model
+> summary(nb_gamlss_model)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors +  
+    Construction_Material_C + Item_Type_C + FloorsType_C + Floors_No +  
+    floodvulnerability + windvulnerability + postcode_area +  
+    postcode_perimeter + postcode_coast_len + postcode_coast_flg +  
+    postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean +  
+    offset(log(TExposure)), family = NBI, data = sample_data) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)               -1.484e+01  7.994e+00  -1.856   0.0634 .  
+SubItemType_CC2           -2.179e+00  1.649e-01 -13.214   <2e-16 ***
+builtYear                  4.946e-03  4.049e-03   1.221   0.2219    
+nrOfFloors                -2.671e-02  3.131e-02  -0.853   0.3936    
+Construction_Material_CC2  1.646e-01  2.855e-01   0.577   0.5643    
+Item_Type_CC2              2.689e-01  5.662e-01   0.475   0.6349    
+Item_Type_CC3             -1.131e-01  1.623e-01  -0.697   0.4859    
+Item_Type_CC4             -1.293e+01  4.816e+03  -0.003   0.9979    
+FloorsType_CC2             3.437e-02  1.518e-01   0.226   0.8208    
+Floors_No                  2.067e-01  1.090e-01   1.897   0.0579 .  
+floodvulnerability2       -6.505e-01  6.121e-01  -1.063   0.2879    
+floodvulnerability3        1.906e-01  3.103e-01   0.614   0.5391    
+floodvulnerability4       -6.074e-02  1.749e-01  -0.347   0.7284    
+windvulnerability2        -1.323e-01  3.035e-01  -0.436   0.6628    
+windvulnerability3         2.701e-01  4.377e-01   0.617   0.5372    
+postcode_area             -1.219e-08  1.141e-08  -1.069   0.2852    
+postcode_perimeter         2.465e-05  2.213e-05   1.114   0.2652    
+postcode_coast_len        -5.954e-06  2.925e-05  -0.204   0.8387    
+postcode_coast_flg1       -1.880e-01  2.983e-01  -0.630   0.5286    
+postcode_alt_mean          1.649e-03  1.084e-03   1.521   0.1283    
+postcode_rgh_mean          7.114e-04  3.759e-02   0.019   0.9849    
+postcode_slo_mean         -5.289e-03  3.501e-01  -0.015   0.9879    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.9656     0.1622   12.12   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  23
+      Residual Deg. of Freedom:  29977 
+                      at cycle:  4 
+ 
+Global Deviance:     3826.983 
+            AIC:     3872.983 
+            SBC:     4064.089 
+******************************************************************
+Warning message:
+In summary.gamlss(nb_gamlss_model) :
+  summary: vcov has failed, option qr is used instead
+
+> 
+> # Define full formula with all predictors
+> full_formula_nb <- TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors + Construction_Material_C + 
++   Item_Type_C + FloorsType_C + Floors_No + floodvulnerability + windvulnerability +
++   postcode_area + postcode_perimeter + postcode_coast_len + postcode_coast_flg + 
++   postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean + offset(log(TExposure))
+> 
+> #--------------------------
+> # Forward Selection (AIC) - NB
+> #--------------------------
+> base_model_nb <- gamlss(TClaimsNo ~ 1 + offset(log(TExposure)), family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 4118.783 
+GAMLSS-RS iteration 2: Global Deviance = 4118.662 
+GAMLSS-RS iteration 3: Global Deviance = 4118.662 
+> current_vars_nb <- c()
+> candidates_nb <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_aic_nb <- AIC(base_model_nb)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_aic_nb <- old_aic_nb
++   best_var_nb <- NULL
++   
++   for (v in candidates_nb) {
++     test_vars_nb <- c(current_vars_nb, v)
++     form_nb <- as.formula(paste("TClaimsNo ~", paste(test_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp_nb <- gamlss(form_nb, family = NBI, data = sample_data)
++     this_aic_nb <- AIC(model_temp_nb)
++     
++     if (this_aic_nb < best_aic_nb) {
++       best_aic_nb <- this_aic_nb
++       best_var_nb <- v
++     }
++   }
++   
++   if (!is.null(best_var_nb)) {
++     current_vars_nb <- c(current_vars_nb, best_var_nb)
++     candidates_nb <- setdiff(candidates_nb, best_var_nb)
++     old_aic_nb <- best_aic_nb
++     improvement <- TRUE
++   }
++ }
+
+> # Final Forward AIC Model - NB
+> forward_formula_nb <- as.formula(paste("TClaimsNo ~", paste(current_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
+> forward_AIC_nb_model <- gamlss(forward_formula_nb, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3834.443 
+GAMLSS-RS iteration 2: Global Deviance = 3833.149 
+GAMLSS-RS iteration 3: Global Deviance = 3833.148 
+> summary(forward_AIC_nb_model)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = forward_formula_nb, family = NBI, data = sample_data) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                      Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         -1.757e+01  7.704e+00  -2.280   0.0226 *  
+SubItemType_CC2     -2.177e+00  1.648e-01 -13.210   <2e-16 ***
+postcode_alt_mean    1.571e-03  6.716e-04   2.340   0.0193 *  
+floodvulnerability2 -3.791e-01  5.010e-01  -0.757   0.4493    
+floodvulnerability3  3.496e-01  1.810e-01   1.932   0.0534 .  
+floodvulnerability4  4.760e-02  1.463e-01   0.325   0.7449    
+builtYear            6.322e-03  3.893e-03   1.624   0.1044    
+Floors_No            1.598e-01  9.890e-02   1.616   0.1061    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.9920     0.1621   12.29   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  9
+      Residual Deg. of Freedom:  29991 
+                      at cycle:  3 
+ 
+Global Deviance:     3833.148 
+            AIC:     3851.148 
+            SBC:     3925.929 
+******************************************************************
+Warning message:
+In summary.gamlss(forward_AIC_nb_model) :
+  summary: vcov has failed, option qr is used instead
+
+> 
+> #--------------------------
+> # Backward Selection (AIC) - NB
+> #--------------------------
+> full_model_nb <- gamlss(full_formula_nb, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3829.253 
+GAMLSS-RS iteration 2: Global Deviance = 3826.985 
+GAMLSS-RS iteration 3: Global Deviance = 3826.983 
+GAMLSS-RS iteration 4: Global Deviance = 3826.983 
+> current_vars_nb <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_aic_nb <- AIC(full_model_nb)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_aic_nb <- old_aic_nb
++   worst_var_nb <- NULL
++   
++   for (v in current_vars_nb) {
++     candidate_vars_nb <- setdiff(current_vars_nb, v)
++     form_nb <- as.formula(paste("TClaimsNo ~", paste(candidate_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp_nb <- gamlss(form_nb, family = NBI, data = sample_data)
++     this_aic_nb <- AIC(model_temp_nb)
++     
++     if (this_aic_nb < best_aic_nb) {
++       best_aic_nb <- this_aic_nb
++       worst_var_nb <- v
++     }
++   }
++   
++   if (!is.null(worst_var_nb)) {
++     current_vars_nb <- setdiff(current_vars_nb, worst_var_nb)
++     old_aic_nb <- best_aic_nb
++     improvement <- TRUE
++   }
++ }
+
+> # Final Backward AIC Model - NB
+> backward_formula_nb <- as.formula(paste("TClaimsNo ~", paste(current_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
+> backward_AIC_nb_model <- gamlss(backward_formula_nb, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3837.11 
+GAMLSS-RS iteration 2: Global Deviance = 3836.216 
+GAMLSS-RS iteration 3: Global Deviance = 3836.216 
+> summary(backward_AIC_nb_model)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = backward_formula_nb, family = NBI, data = sample_data) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                     Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        -1.678e+01  7.707e+00  -2.178 0.029415 *  
+SubItemType_CC2    -2.182e+00  1.652e-01 -13.209  < 2e-16 ***
+builtYear           5.869e-03  3.897e-03   1.506 0.132054    
+Floors_No           1.489e-01  9.963e-02   1.495 0.134964    
+postcode_area      -1.589e-08  1.022e-08  -1.555 0.120064    
+postcode_perimeter  2.794e-05  1.346e-05   2.075 0.038005 *  
+postcode_alt_mean   1.808e-03  4.940e-04   3.659 0.000253 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.0097     0.1603   12.54   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  8
+      Residual Deg. of Freedom:  29992 
+                      at cycle:  3 
+ 
+Global Deviance:     3836.216 
+            AIC:     3852.216 
+            SBC:     3918.688 
+******************************************************************
+Warning message:
+In summary.gamlss(backward_AIC_nb_model) :
+  summary: vcov has failed, option qr is used instead
+
+> 
+> ### Stepwise Selection using AIC (Both Directions)
+> stepAIC_nb <- stepGAIC(nb_gamlss_model, direction = "both", k = 2, trace = FALSE)
+> summary(stepAIC_nb)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = TClaimsNo ~ SubItemType_C + builtYear + Floors_No +  
+    postcode_area + postcode_perimeter + postcode_alt_mean +  
+    offset(log(TExposure)), family = NBI, data = sample_data,      trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                     Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        -1.678e+01  7.707e+00  -2.178 0.029415 *  
+SubItemType_CC2    -2.182e+00  1.652e-01 -13.209  < 2e-16 ***
+builtYear           5.869e-03  3.897e-03   1.506 0.132054    
+Floors_No           1.489e-01  9.963e-02   1.495 0.134964    
+postcode_area      -1.589e-08  1.022e-08  -1.555 0.120064    
+postcode_perimeter  2.794e-05  1.346e-05   2.075 0.038005 *  
+postcode_alt_mean   1.808e-03  4.940e-04   3.659 0.000253 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.0097     0.1603   12.54   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  8
+      Residual Deg. of Freedom:  29992 
+                      at cycle:  3 
+ 
+Global Deviance:     3836.216 
+            AIC:     3852.216 
+            SBC:     3918.688 
+******************************************************************
+Warning message:
+In summary.gamlss(stepAIC_nb) :
+  summary: vcov has failed, option qr is used instead
+
+
+> ## ------------------------ BIC-Based Variable Selection-NB ------------------------
+> 
+> #--------------------------
+> # Forward Selection (BIC) - NB
+> #--------------------------
+> k_bic_nb <- log(nrow(sample_data))
+> base_model_nb <- gamlss(TClaimsNo ~ 1 + offset(log(TExposure)), family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 4118.783 
+GAMLSS-RS iteration 2: Global Deviance = 4118.662 
+GAMLSS-RS iteration 3: Global Deviance = 4118.662 
+> current_vars_nb <- c()
+> candidates_nb <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_bic_nb <- AIC(base_model_nb, k = k_bic_nb)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_bic_nb <- old_bic_nb
++   best_var_nb <- NULL
++   
++   for (v in candidates_nb) {
++     test_vars_nb <- c(current_vars_nb, v)
++     form_nb <- as.formula(paste("TClaimsNo ~", paste(test_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp_nb <- gamlss(form_nb, family = NBI, data = sample_data)
++     this_bic_nb <- AIC(model_temp_nb, k = k_bic_nb)
++     
++     if (this_bic_nb < best_bic_nb) {
++       best_bic_nb <- this_bic_nb
++       best_var_nb <- v
++     }
++   }
++   
++   if (!is.null(best_var_nb)) {
++     current_vars_nb <- c(current_vars_nb, best_var_nb)
++     candidates_nb <- setdiff(candidates_nb, best_var_nb)
++     old_bic_nb <- best_bic_nb
++     improvement <- TRUE
++   }
++ }
+
+> # Final Forward BIC Model - NB
+> forward_BIC_nb_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
+> forward_BIC_nb_model <- gamlss(forward_BIC_nb_formula, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3846.662 
+GAMLSS-RS iteration 2: Global Deviance = 3846.073 
+GAMLSS-RS iteration 3: Global Deviance = 3846.073 
+> summary(forward_BIC_nb_model)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = forward_BIC_nb_formula, family = NBI,      data = sample_data) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       -4.8313920  0.0973061 -49.651  < 2e-16 ***
+SubItemType_CC2   -2.1815155  0.1661198 -13.132  < 2e-16 ***
+postcode_alt_mean  0.0021767  0.0004808   4.527 5.99e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.0532     0.1687   12.17   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  4
+      Residual Deg. of Freedom:  29996 
+                      at cycle:  3 
+ 
+Global Deviance:     3846.073 
+            AIC:     3854.073 
+            SBC:     3887.308 
+******************************************************************
+> BIC(forward_BIC_nb_model)
+[1] 3887.308
+> 
+> #--------------------------
+> # Backward Selection (BIC) - NB
+> #--------------------------
+> full_model_nb <- gamlss(full_formula_nb, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3829.253 
+GAMLSS-RS iteration 2: Global Deviance = 3826.985 
+GAMLSS-RS iteration 3: Global Deviance = 3826.983 
+GAMLSS-RS iteration 4: Global Deviance = 3826.983 
+> current_vars_nb <- setdiff(names(sample_data), c("TClaimsNo", "TExposure"))
+> old_bic_nb <- AIC(full_model_nb, k = k_bic_nb)
+> improvement <- TRUE
+> 
+> while (improvement) {
++   improvement <- FALSE
++   best_bic_nb <- old_bic_nb
++   worst_var_nb <- NULL
++   
++   for (v in current_vars_nb) {
++     candidate_vars_nb <- setdiff(current_vars_nb, v)
++     form_nb <- as.formula(paste("TClaimsNo ~", paste(candidate_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
++     model_temp_nb <- gamlss(form_nb, family = NBI, data = sample_data)
++     this_bic_nb <- AIC(model_temp_nb, k = k_bic_nb)
++     
++     if (this_bic_nb < best_bic_nb) {
++       best_bic_nb <- this_bic_nb
++       worst_var_nb <- v
++     }
++   }
++   
++   if (!is.null(worst_var_nb)) {
++     current_vars_nb <- setdiff(current_vars_nb, worst_var_nb)
++     old_bic_nb <- best_bic_nb
++     improvement <- TRUE
++   }
++ }
+
+> # Final Backward BIC Model - NB
+> backward_BIC_nb_formula <- as.formula(paste("TClaimsNo ~", paste(current_vars_nb, collapse = " + "), "+ offset(log(TExposure))"))
+> backward_BIC_nb_model <- gamlss(backward_BIC_nb_formula, family = NBI, data = sample_data)
+GAMLSS-RS iteration 1: Global Deviance = 3846.662 
+GAMLSS-RS iteration 2: Global Deviance = 3846.073 
+GAMLSS-RS iteration 3: Global Deviance = 3846.073 
+> summary(backward_BIC_nb_model)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = backward_BIC_nb_formula, family = NBI,      data = sample_data) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       -4.8313920  0.0973061 -49.651  < 2e-16 ***
+SubItemType_CC2   -2.1815155  0.1661198 -13.132  < 2e-16 ***
+postcode_alt_mean  0.0021767  0.0004808   4.527 5.99e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.0532     0.1687   12.17   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  4
+      Residual Deg. of Freedom:  29996 
+                      at cycle:  3 
+ 
+Global Deviance:     3846.073 
+            AIC:     3854.073 
+            SBC:     3887.308 
+******************************************************************
+> BIC(backward_BIC_nb_model)
+[1] 3887.308
+> 
+> 
+> ### Stepwise Selection using BIC (Both Directions)
+> stepBIC_nb <- stepGAIC(nb_gamlss_model, direction = "both", k = log(nrow(sample_data)), trace = FALSE)
+> summary(stepBIC_nb)
+******************************************************************
+Family:  c("NBI", "Negative Binomial type I") 
+
+Call:  gamlss(formula = TClaimsNo ~ SubItemType_C + postcode_alt_mean +  
+    offset(log(TExposure)), family = NBI, data = sample_data,      trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       -4.8313920  0.0973061 -49.651  < 2e-16 ***
+SubItemType_CC2   -2.1815155  0.1661198 -13.132  < 2e-16 ***
+postcode_alt_mean  0.0021767  0.0004808   4.527 5.99e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.0532     0.1687   12.17   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  4
+      Residual Deg. of Freedom:  29996 
+                      at cycle:  3 
+ 
+Global Deviance:     3846.073 
+            AIC:     3854.073 
+            SBC:     3887.308 
+******************************************************************
+> BIC(stepBIC_nb)
+[1] 3887.308
+
+
+Family:  c("ZINBI", "Zero inflated negative binomial type I") 
+
+Call:  gamlss(formula = TClaimsNo ~ SubItemType_C + builtYear + nrOfFloors +  
+    Construction_Material_C + Item_Type_C + FloorsType_C + Floors_No +  
+    floodvulnerability + windvulnerability + postcode_area +  
+    postcode_perimeter + postcode_coast_len + postcode_coast_flg +  
+    postcode_alt_mean + postcode_rgh_mean + postcode_slo_mean +  
+    offset(log(TExposure)), sigma.formula = ~1, nu.formula = ~1,  
+    family = ZINBI, data = sample_data, sigma.start = 1.9656) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+                            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)               -1.057e+01  1.044e+01  -1.013    0.311    
+SubItemType_CC2           -1.507e+00  2.092e-01  -7.203 6.01e-13 ***
+builtYear                  4.214e-03  5.275e-03   0.799    0.424    
+nrOfFloors                 1.038e-02  3.789e-02   0.274    0.784    
+Construction_Material_CC2  6.570e-02  3.092e-01   0.212    0.832    
+Item_Type_CC2              3.942e-01  8.866e-01   0.445    0.657    
+Item_Type_CC3              3.990e-03  2.128e-01   0.019    0.985    
+Item_Type_CC4             -3.373e+01  1.000e+05   0.000    1.000    
+FloorsType_CC2            -1.055e-03  1.777e-01  -0.006    0.995    
+Floors_No                  8.655e-02  1.446e-01   0.599    0.549    
+floodvulnerability2       -6.196e-01  9.199e-01  -0.674    0.501    
+floodvulnerability3        3.650e-02  4.202e-01   0.087    0.931    
+floodvulnerability4       -2.618e-02  2.127e-01  -0.123    0.902    
+windvulnerability2        -1.084e-01  3.510e-01  -0.309    0.757    
+windvulnerability3         1.346e-01  5.143e-01   0.262    0.793    
+postcode_area             -8.815e-09  1.769e-08  -0.498    0.618    
+postcode_perimeter         1.608e-05  2.420e-05   0.664    0.507    
+postcode_coast_len        -1.649e-06  5.043e-05  -0.033    0.974    
+postcode_coast_flg1       -5.785e-02  4.566e-01  -0.127    0.899    
+postcode_alt_mean          1.022e-03  1.347e-03   0.759    0.448    
+postcode_rgh_mean          9.118e-03  3.728e-02   0.245    0.807    
+postcode_slo_mean         -7.183e-02  3.353e-01  -0.214    0.830    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -33.50497    0.04508  -743.2   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  3.06822    0.05437   56.44   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+No. of observations in the fit:  30000 
+Degrees of Freedom for the fit:  24
+      Residual Deg. of Freedom:  29976 
+                      at cycle:  20 
+ 
+Global Deviance:     4004.192 
+            AIC:     4052.192 
+            SBC:     4251.607 
+******************************************************************
+Warning message:
+In summary.gamlss(zinb_model) :
+  summary: vcov has failed, option qr is used instead
+
+
+
+
+
+
