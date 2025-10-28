@@ -32,6 +32,7 @@ These findings can assist insurers in better understanding and pricing climate-r
 ## Author
 **Kesia Eldo**  
 BSc (Hons) Data Science, Heriot- Watt University, Edinburgh
+
 *This research formed part of my undergraduate dissertation project.*
 
 
